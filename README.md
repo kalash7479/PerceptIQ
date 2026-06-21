@@ -1,40 +1,17 @@
-## Dev/Creator: tubakhxn
+## 🔍 About This Fork
 
-# Real-Time 3D Dashcam Perception System
+This project extends the original **Real-Time 3D Dashcam Perception System** 
+by [tubakhxn](https://github.com/tubakhxn/Real-Time-3D-Dashcam-Perception-System), 
+which combines YOLOv8 vehicle detection with monocular depth estimation to 
+build a real-time 3D Bird's-Eye-View and collision risk overlay.
 
-This project transforms a regular dashcam video into a real-time 3D map with collision risk analysis. It leverages YOLO for vehicle detection, Depth Anything V2 for depth estimation, and visualizes the results in a Bird’s Eye View (BEV) with risk analysis.
+**What I added:**
+- 📊 A detection logging system that captures per-frame vehicle distance, 
+  risk classification, and tracking data to CSV
+- 🐍 A Pandas/Seaborn analytics script (`analyze_results.py`) generating 
+  risk distribution, distance-over-time, and vehicle-count summaries
+- 📈 A Power BI dashboard built on the exported detection log, surfacing 
+  risk events and distance trends for analysis
 
-## What is this project about?
-- Detects vehicles (cars, motorcycles, trucks) in dashcam videos using YOLO.
-- Estimates accurate metric depth from a single camera using Depth Anything V2.
-- Projects pixels into 3D XYZ coordinates and renders them in BEV.
-- Tracks trajectories and monitors lateral intrusion and frontal distance.
-- Provides instant risk level updates with color-coded detections.
-
-## How to fork and run
-1. Clone or fork this repository to your local machine.
-2. Ensure you have Python 3.11 installed.
-3. Create and activate a virtual environment:
-   ```
-   python -m venv .venv
-   .venv\Scripts\activate
-   ```
-4. Install dependencies (see below for numpy pinning):
-   ```
-   pip install numpy==1.24.4
-   pip install torch==2.2.0+cpu torchvision==0.17.0+cpu --index-url https://download.pytorch.org/whl/cpu
-   pip install pillow tqdm scipy==1.11.4 transformers==4.40.2 ultralytics supervision ffmpeg-python opencv-python matplotlib --no-deps
-   ```
-5. Place your input video (e.g., `video.mp4`) in the project directory.
-6. Run the main script:
-   ```
-   python app.py video.mp4
-   ```
-7. The output video will be saved in the `output/` directory.
-
-## Relevant Wikipedia links
-- [YOLO (object detection)](https://en.wikipedia.org/wiki/You_Only_Look_Once)
-- [Depth estimation](https://en.wikipedia.org/wiki/Depth_map)
-- [Bird's-eye view](https://en.wikipedia.org/wiki/Bird%27s-eye_view)
-- [Advanced driver-assistance systems](https://en.wikipedia.org/wiki/Advanced_driver-assistance_systems)
-- [Dashcam](https://en.wikipedia.org/wiki/Dashcam)
+Full credit to the original author for the core CV/ML pipeline — this fork 
+focuses on turning the model's raw output into structured, analyzable insight.

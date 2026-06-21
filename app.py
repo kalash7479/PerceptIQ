@@ -2,6 +2,7 @@
 import sys
 import os
 import subprocess
+import csv      
 import platform
 
 def _pip(*args, show=False):
@@ -15,7 +16,7 @@ def _pip(*args, show=False):
 
 def _ensure_packages():
     print("=" * 60)
-    print("  REAL-TIME 3D DASHCAM PERCEPTION SYSTEM")
+    print("  PerceptIQ")
     print("  Auto-checking dependencies...")
     print("=" * 60)
 
@@ -162,6 +163,7 @@ import argparse
 import time
 import math
 import collections
+import csv
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -190,7 +192,7 @@ DEPTH_MODEL = "depth-anything/Depth-Anything-V2-Small-hf"
 
 BANNER = """
 ╔══════════════════════════════════════════════════════════════════╗
-║          Real-Time 3D Dashcam Perception System v1.2             ║
+║                           PerceptIQ                              ║
 ║          YOLO · DepthAnything V2 · BEV · Collision Risk          ║
 ╚══════════════════════════════════════════════════════════════════╝
 """
@@ -507,7 +509,8 @@ def process_video(input_path: str, args):
     depth_est.load()
 
     tracker = ObjectTracker()
-
+    log_rows = []   # NEW: collects per-detection data for analytics
+    
     # Writer
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
     writer = cv2.VideoWriter(tmp_out, fourcc, src_fps, (OUTPUT_W + 4, OUTPUT_H))
@@ -541,6 +544,27 @@ def process_video(input_path: str, args):
         depth_norm  = depth_est.estimate(depth_input)
         depth_norm  = cv2.resize(depth_norm, (work_w, work_h))
 
+        # NEW: log detection data for analytics
+        if tracked is not None and len(tracked) > 0 and tracked.tracker_id is not None:
+            timestamp = frame_no / src_fps
+            for i in range(len(tracked.xyxy)):
+                box   = tracked.xyxy[i]
+                cls   = int(tracked.class_id[i]) if tracked.class_id is not None else 2
+                tid   = int(tracked.tracker_id[i])
+                label = VEHICLE_CLASSES.get(cls, "vehicle")
+                dist  = estimate_distance(depth_norm, box, work_w, work_h)
+                risk  = get_risk(dist, box, work_w)
+                log_rows.append({
+                    "frame": frame_no,
+                    "timestamp_sec": round(timestamp, 2),
+                    "track_id": tid,
+                    "vehicle_type": label,
+                    "distance_m": dist,
+                    "risk_level": risk,
+                })
+
+        
+
         # Build panels
         left_panel  = draw_left_panel(work, tracked, depth_norm, tracker)
         right_panel = draw_right_panel(depth_norm, tracked, work_w, work_h)
@@ -566,6 +590,16 @@ def process_video(input_path: str, args):
     pbar.close()
     cap.release()
     writer.release()
+
+    # NEW: save detection log
+    log_path = "./output/detection_log.csv"
+    if log_rows:
+        with open(log_path, "w", newline="") as f:
+            writer_csv = csv.DictWriter(f, fieldnames=log_rows[0].keys())
+            writer_csv.writeheader()
+            writer_csv.writerows(log_rows)
+        print(f"[INFO] Detection log saved → {log_path} ({len(log_rows)} rows)")
+
     if args.show:
         cv2.destroyAllWindows()
 
